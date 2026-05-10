@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎪 人格标签拍卖会 - 快速测试端</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --bg: #f5f6fa;
+            --card: #ffffff;
+            --text: #2d3436;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 { color: var(--primary); margin-bottom: 0.5rem; }
+        .subtitle { color: #636e72; font-size: 0.9rem; margin-bottom: 2rem; }
+        
+        .question-card { display: none; animation: fadeIn 0.5s; }
+        .question-card.active { display: block; }
+        
+        .options { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+        }
+        button:hover { background: #5649c0; transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+        button.option-btn { background: white; color: var(--text); border: 2px solid var(--secondary); text-align: left; }
+        button.option-btn:hover { background: var(--secondary); color: white; }
+
+        .result-card { display: none; text-align: left; }
+        .result-header {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .result-type { font-size: 2rem; font-weight: bold; }
+        .result-desc { font-size: 0.9rem; opacity: 0.9; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #f1f2f6;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-label { font-size: 0.8rem; color: #636e72; }
+        .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        
+        .coin-display {
+            background: #ffeaa7;
+            color: #d35400;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            border: 2px dashed #fdcb6e;
+        }
+
+        .reset-btn {
+            background: #636e72;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .network-info {
+            margin-top: 20px;
+            font-size: 0.75rem;
+            color: #b2bec3;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="quiz-area">
+        <h1>🎪 人格标签测试</h1>
+        <p class="subtitle">快速回答3题，决定你的初始资源</p>
+        
+        <!-- Q1: E vs I -->
+        <div class="question-card active" data-dim="EI">
+            <h3>Q1. 周末聚会时，你通常感觉？</h3>
+            <div class="options">
+                <button class="option-btn" onclick="nextStep('E')">⚡ 和很多人聊天，越热闹越兴奋 (E)</button>
+                <button class="option-btn" onclick="nextStep('I')">🔋 和熟人深聊，人多会消耗能量 (I)</button>
+            </div>
+        </div>
+
+        <!-- Q2: T vs F -->
+        <div class="question-card" data-dim="TF">
+            <h3>Q2. 朋友遇到困难求助，你第一反应是？</h3>
+            <div class="options">
+                <button class="option-btn" onclick="nextStep('T')">🧠 分析原因，提供逻辑解决方案 (T)</button>
+                <button class="option-btn" onclick="nextStep('F')">❤️ 感受情绪，先给予安慰和支持 (F)</button>
+            </div>
+        </div>
+
+        <!-- Q3: J vs P -->
+        <div class="question-card" data-dim="JP">
+            <h3>Q3. 面对即将到来的旅行，你会？</h3>
+            <div class="options">
+                <button class="option-btn" onclick="nextStep('J')">📝 提前做好详细攻略和计划 (J)</button>
+                <button class="option-btn" onclick="nextStep('P')">🎒 到了再说，享受随性的惊喜 (P)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Area -->
+    <div id="result-area" class="result-card">
+        <div class="result-header">
+            <div class="result-type" id="res-type">--</div>
+            <div class="result-desc" id="res-desc">人格类型</div>
+        </div>
+
+        <div class="coin-display">
+            💰 初始资金：<span id="res-coins">0</span> 币
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">能量来源</div>
+                <div class="stat-value" id="res-ei">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">决策方式</div>
+                <div class="stat-value" id="res-tf">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">生活态度</div>
+                <div class="stat-value" id="res-jp">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">专属特权</div>
+                <div class="stat-value" style="font-size: 1rem;" id="res-perk">--</div>
+            </div>
+        </div>
+
+        <button class="reset-btn" onclick="resetQuiz()">🔄 测试下一位</button>
+    </div>
+
+    <div class="network-info" id="network-info">
+        正在获取本地网络信息...
+    </div>
+</div>
+
+<script>
+    let currentStep = 0;
+    let answers = {};
+    
+    // 配置规则
+    const rules = {
+        coins: {
+            'E': 15, 'I': 3,
+            'T': 10, 'F': 6,
+            'J': 8, 'P': 8 // J/P资金可以一样，主要区别在特权
+        },
+        perks: {
+            'E': '可拍专属虾片',
+            'I': '可拍专属薯片',
+            'T': '理性巧克力资格',
+            'F': '情感软糖资格',
+            'J': '提前看清单',
+            'P': '惊喜盲盒资格'
+        },
+        desc: {
+            'E': '社交能力强，资源多多！',
+            'I': '比较内敛，资源少一些~',
+            'T': '理性冷静，适合管理',
+            'F': '感性温柔，需要支持',
+            'J': '计划通，掌控全局',
+            'P': '随性者，惊喜不断'
+        }
+    };
+
+    function nextStep(answer) {
+        const cards = document.querySelectorAll('.question-card');
+        const currentCard = cards[currentStep];
+        const dim = currentCard.getAttribute('data-dim');
+        
+        answers[dim] = answer;
+        
+        currentStep++;
+        
+        if (currentStep < cards.length) {
+            currentCard.classList.remove('active');
+            cards[currentStep].classList.add('active');
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+
+        const type = answers.EI + answers.TF + answers.JP;
+        
+        // 计算总资金 (取主要维度最大值逻辑，或者简单相加逻辑，这里采用方案中的主导逻辑)
+        // 方案中是：E(15)/I(3), T(10)/F(6). J/P主要是特权。
+        // 我们取两个数值维度的和作为基础，或者按方案中最高的那个？
+        // 方案原文："E人15币", "T人10币"。如果是ET人，是15+10=25吗？
+        // 为了游戏平衡，建议取最大值或者固定公式。
+        // 这里采用：基础分(E/I) + 辅助分(T/F)/2 + 固定分
+        // 修正：严格按照用户提供的表格逻辑。
+        // 如果一个人既是E又是T，怎么算？通常MBTI拍卖游戏取最显著特征或叠加。
+        // 让我们做一个简单的叠加逻辑，但设置上限，防止通货膨胀太严重，或者完全叠加制造巨大差距。
+        // 为了戏剧性，我们完全叠加：
+        
+        let coinVal = 0;
+        if(answers.EI === 'E') coinVal += 15; else coinVal += 3;
+        if(answers.TF === 'T') coinVal += 10; else coinVal += 6;
+        // J/P 不给额外钱，只给特权，保持平衡
+        
+        // 更新UI
+        document.getElementById('res-type').innerText = type;
+        document.getElementById('res-coins').innerText = coinVal;
+        
+        document.getElementById('res-ei').innerText = answers.EI === 'E' ? '外向 (E)' : '内向 (I)';
+        document.getElementById('res-tf').innerText = answers.TF === 'T' ? '理性 (T)' : '感性 (F)';
+        document.getElementById('res-jp').innerText = answers.JP === 'J' ? '计划 (J)' : '随性 (P)';
+        
+        // 组合特权字符串
+        let perks = [];
+        perks.push(rules.perks[answers.EI]);
+        perks.push(rules.perks[answers.TF]);
+        perks.push(rules.perks[answers.JP]);
+        document.getElementById('res-perk').innerText = perks.join(' + ');
+
+        // 动态背景色微调
+        const header = document.querySelector('.result-header');
+        if(answers.EI === 'E') header.style.background = '#ff7675'; // E人热烈
+        else if(answers.EI === 'I') header.style.background = '#74b9ff'; // I人冷静
+        
+        showNetworkInfo();
+    }
+
+    function resetQuiz() {
+        currentStep = 0;
+        answers = {};
+        document.querySelectorAll('.question-card').forEach(c => c.classList.remove('active'));
+        document.querySelector('.question-card').classList.add('active');
+        document.getElementById('result-area').style.display = 'none';
+        document.getElementById('quiz-area').style.display = 'block';
+    }
+
+    function showNetworkInfo() {
+        // 尝试获取局域网IP提示 (实际浏览器JS无法直接获取本机IP，只能提示用户)
+        const infoDiv = document.getElementById('network-info');
+        infoDiv.innerHTML = `
+            💡 <strong>主持人提示：</strong><br>
+            如果在电脑上运行，可直接操作。<br>
+            若需手机访问，请在电脑终端运行:<br>
+            <code style="background:#ddd; padding:2px 5px; border-radius:4px;">python3 -m http.server 8000</code><br>
+            然后手机访问 <code>http://电脑IP:8000</code>
+        `;
+    }
+</script>
+
+</body>
+</html>
